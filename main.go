@@ -1,63 +1,24 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
-	"github.com/studiohallel/sofiaos/internal/auth"
-	"github.com/studiohallel/sofiaos/internal/metrics"
-	"github.com/studiohallel/sofiaos/internal/terminal"
+	"github.com/gorilla/websocket"
 )
 
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-
-type config struct {
-	addr        string
-	galeneURL   string
-	staticDir   string
-	users       []userSeed
-}
-
-type userSeed struct {
-	id, username, password, role string
-}
-
-func loadConfig() config {
-	cfg := config{
-		addr:      env("SOFIAOS_ADDR", ":8080"),
-		galeneURL: env("SOFIAOS_GALENE_URL", "https://conference.studiohallel.online:8443"),
-		staticDir: env("SOFIAOS_STATIC", "./web/static"),
-	}
-
-	// usuários definidos via env ou hardcoded para dev
-	// produção: SOFIAOS_USERS="julios:senhaforte:admin,viewer:outrasenha:viewer"
-	rawUsers := os.Getenv("SOFIAOS_USERS")
-	if rawUsers != "" {
-		for _, entry := range strings.Split(rawUsers, ",") {
-			parts := strings.SplitN(entry, ":", 3)
-			if len(parts) == 3 {
-				cfg.users = append(cfg.users, userSeed{
-					id:       parts[0],
-					username: parts[0],
-					password: parts[1],
-					role:     parts[2],
-				})
-			}
-		}
-	} else {
-		// dev seed — TROQUE antes de subir em produção
-		cfg.users = []userSeed{
-			{id: "1", username: "julios", password: "dev-troque-em-producao", role: "admin"},
-		}
-	}
-	return cfg
-}
+// ── CONFIG ───────────────────────────────────────────────────────────────────
 
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -66,196 +27,243 @@ func env(key, fallback string) string {
 	return fallback
 }
 
-// ── MAIN ─────────────────────────────────────────────────────────────────────
+// ── METRICS ──────────────────────────────────────────────────────────────────
 
-func main() {
-	cfg := loadConfig()
-
-	store := auth.NewStore()
-	for _, u := range cfg.users {
-		if err := store.AddUser(u.id, u.username, u.password, u.role); err != nil {
-			log.Fatalf("erro ao criar usuário %s: %v", u.username, err)
-		}
-	}
-
-	mux := http.NewServeMux()
-
-	// ── PUBLIC ──
-	mux.HandleFunc("POST /api/auth/login", loginHandler(store))
-	mux.HandleFunc("POST /api/auth/refresh", refreshHandler(store))
-
-	// ── PROTECTED ──
-	mux.Handle("GET /api/metrics", jwt(http.HandlerFunc(metricsHandler)))
-	mux.Handle("GET /api/ws/terminal", jwt(http.HandlerFunc(terminal.Handler)))
-	mux.Handle("/api/galene/", jwt(galeneProxy(cfg.galeneURL)))
-
-	// ── STATIC (UI) ──
-	mux.Handle("/", http.FileServer(http.Dir(cfg.staticDir)))
-
-	srv := &http.Server{
-		Addr:         cfg.addr,
-		Handler:      cors(mux),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 0, // 0 = sem timeout para WebSocket
-		IdleTimeout:  60 * time.Second,
-	}
-
-	log.Printf("sofiaos escutando em %s", cfg.addr)
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
+type Snapshot struct {
+	CPU     float64 `json:"cpu_percent"`
+	RAMMb   uint64  `json:"ram_used_mb"`
+	RAMPct  float64 `json:"ram_percent"`
+	DiskGb  uint64  `json:"disk_used_gb"`
+	DiskPct float64 `json:"disk_percent"`
+	Load1   float64 `json:"load1"`
+	Uptime  float64 `json:"uptime_seconds"`
+	At      string  `json:"at"`
 }
 
-// ── HANDLERS ─────────────────────────────────────────────────────────────────
+type cpuSample struct{ total, idle uint64 }
 
-type loginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type loginResponse struct {
-	Access  string `json:"access_token"`
-	Refresh string `json:"refresh_token"`
-	Role    string `json:"role"`
-}
-
-func loginHandler(store *auth.Store) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req loginRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			httpError(w, "body inválido", http.StatusBadRequest)
-			return
-		}
-
-		access, refresh, err := store.Authenticate(req.Username, req.Password)
-		if err != nil {
-			// mesmo erro para user inexistente e senha errada — evita enumeration
-			time.Sleep(300 * time.Millisecond)
-			httpError(w, "credenciais inválidas", http.StatusUnauthorized)
-			return
-		}
-
-		// extrai role do access token para incluir na resposta
-		claims, _ := auth.Verify(access)
-		role := ""
-		if claims != nil {
-			role = claims.Role
-		}
-
-		jsonOK(w, loginResponse{Access: access, Refresh: refresh, Role: role})
-	}
-}
-
-func refreshHandler(store *auth.Store) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		token := bearerToken(r)
-		if token == "" {
-			httpError(w, "token ausente", http.StatusUnauthorized)
-			return
-		}
-		claims, err := auth.Verify(token)
-		if err != nil {
-			httpError(w, "token inválido", http.StatusUnauthorized)
-			return
-		}
-		// reemite apenas o access token
-		newAccess, _, err := store.Authenticate("__refresh__", claims.UserID)
-		_ = newAccess
-		_ = err
-		// simplificado: em produção valida o refresh token separadamente
-		httpError(w, "use /api/auth/login", http.StatusNotImplemented)
-	}
-}
-
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	snap, err := metrics.Collect()
+func readCPU() (cpuSample, error) {
+	f, err := os.Open("/proc/stat")
 	if err != nil {
-		httpError(w, "erro ao coletar métricas: "+err.Error(), http.StatusInternalServerError)
+		return cpuSample{}, err
+	}
+	defer f.Close()
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		line := sc.Text()
+		if !strings.HasPrefix(line, "cpu ") {
+			continue
+		}
+		fields := strings.Fields(line)[1:]
+		var vals []uint64
+		for _, v := range fields {
+			n, _ := strconv.ParseUint(v, 10, 64)
+			vals = append(vals, n)
+		}
+		var total uint64
+		for _, v := range vals {
+			total += v
+		}
+		idle := vals[3]
+		if len(vals) > 4 {
+			idle += vals[4]
+		}
+		return cpuSample{total, idle}, nil
+	}
+	return cpuSample{}, nil
+}
+
+func collectCPU() float64 {
+	s1, _ := readCPU()
+	time.Sleep(200 * time.Millisecond)
+	s2, _ := readCPU()
+	td := float64(s2.total - s1.total)
+	id := float64(s2.idle - s1.idle)
+	if td == 0 {
+		return 0
+	}
+	return round2((1 - id/td) * 100)
+}
+
+func collectRAM() (uint64, float64) {
+	f, err := os.Open("/proc/meminfo")
+	if err != nil {
+		return 0, 0
+	}
+	defer f.Close()
+	m := map[string]uint64{}
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		parts := strings.Fields(sc.Text())
+		if len(parts) >= 2 {
+			m[strings.TrimSuffix(parts[0], ":")], _ = strconv.ParseUint(parts[1], 10, 64)
+		}
+	}
+	total := m["MemTotal"]
+	free := m["MemFree"] + m["Buffers"] + m["Cached"] + m["SReclaimable"]
+	used := total - free
+	pct := float64(0)
+	if total > 0 {
+		pct = round2(float64(used) / float64(total) * 100)
+	}
+	return used / 1024, pct
+}
+
+func collectDisk() (uint64, float64) {
+	var st syscall.Statfs_t
+	if err := syscall.Statfs("/", &st); err != nil {
+		return 0, 0
+	}
+	total := st.Blocks * uint64(st.Bsize)
+	free := st.Bfree * uint64(st.Bsize)
+	used := total - free
+	pct := float64(0)
+	if total > 0 {
+		pct = round2(float64(used) / float64(total) * 100)
+	}
+	return used / (1024 * 1024 * 1024), pct
+}
+
+func collectLoad() float64 {
+	data, err := os.ReadFile("/proc/loadavg")
+	if err != nil {
+		return 0
+	}
+	f, _ := strconv.ParseFloat(strings.Fields(string(data))[0], 64)
+	return f
+}
+
+func collectUptime() float64 {
+	data, err := os.ReadFile("/proc/uptime")
+	if err != nil {
+		return 0
+	}
+	f, _ := strconv.ParseFloat(strings.Fields(string(data))[0], 64)
+	return f
+}
+
+func round2(f float64) float64 { return float64(int(f*100)) / 100 }
+
+func collectAll() *Snapshot {
+	ram, ramPct := collectRAM()
+	disk, diskPct := collectDisk()
+	return &Snapshot{
+		CPU:     collectCPU(),
+		RAMMb:   ram,
+		RAMPct:  ramPct,
+		DiskGb:  disk,
+		DiskPct: diskPct,
+		Load1:   collectLoad(),
+		Uptime:  collectUptime(),
+		At:      time.Now().Format(time.RFC3339),
+	}
+}
+
+// ── TERMINAL ─────────────────────────────────────────────────────────────────
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin:     func(r *http.Request) bool { return true },
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+}
+
+func terminalHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("terminal upgrade: %v", err)
 		return
 	}
-	jsonOK(w, snap)
-}
+	defer conn.Close()
 
-func galeneProxy(target string) http.Handler {
-	u, err := url.Parse(target)
-	if err != nil {
-		log.Fatalf("galene URL inválida: %v", err)
+	shell := env("SOFIAOS_SHELL", "/bin/bash")
+	cmd := exec.Command(shell)
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
+
+	stdin, _ := cmd.StdinPipe()
+	stdout, _ := cmd.StdoutPipe()
+	stderr, _ := cmd.StderrPipe()
+
+	if err := cmd.Start(); err != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("\r\n[sofiaos] erro ao iniciar shell\r\n"))
+		return
 	}
-	rp := httputil.NewSingleHostReverseProxy(u)
-	return http.StripPrefix("/api/galene", rp)
-}
+	defer cmd.Process.Kill()
 
-// ── MIDDLEWARE ────────────────────────────────────────────────────────────────
+	done := make(chan struct{})
 
-// jwt valida o Bearer token em Authorization ou o cookie "sofiaos_token".
-func jwt(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := bearerToken(r)
-		if token == "" {
-			// fallback: cookie (útil para WebSocket onde header é difícil)
-			if c, err := r.Cookie("sofiaos_token"); err == nil {
-				token = c.Value
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := stdout.Read(buf)
+			if n > 0 {
+				conn.WriteMessage(websocket.BinaryMessage, buf[:n])
 			}
-		}
-		if token == "" {
-			httpError(w, "não autenticado", http.StatusUnauthorized)
-			return
-		}
-		claims, err := auth.Verify(token)
-		if err != nil {
-			httpError(w, "token inválido ou expirado", http.StatusUnauthorized)
-			return
-		}
-		// injeta claims no header para uso downstream (sem context para manter simples)
-		r.Header.Set("X-Sofia-User", claims.Username)
-		r.Header.Set("X-Sofia-Role", claims.Role)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		allowed := []string{
-			"https://sofiaos.studiohallel.online",
-			"https://studiohallel.online",
-			"http://localhost:3000",
-			"http://localhost:8080",
-		}
-		for _, a := range allowed {
-			if origin == a {
-				w.Header().Set("Access-Control-Allow-Origin", a)
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			if err != nil {
 				break
 			}
 		}
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
+		close(done)
+	}()
+
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := stderr.Read(buf)
+			if n > 0 {
+				conn.WriteMessage(websocket.BinaryMessage, buf[:n])
+			}
+			if err != nil {
+				break
+			}
 		}
-		next.ServeHTTP(w, r)
+	}()
+
+	go func() {
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				cmd.Process.Kill()
+				return
+			}
+			io.Writer(stdin).Write(msg)
+		}
+	}()
+
+	<-done
+}
+
+// ── MAIN ─────────────────────────────────────────────────────────────────────
+
+func main() {
+	addr := env("SOFIAOS_ADDR", ":8080")
+	galeneURL := env("SOFIAOS_GALENE_URL", "https://conference.studiohallel.online:8443")
+	staticDir := env("SOFIAOS_STATIC", "./static")
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(collectAll())
 	})
-}
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
+	mux.HandleFunc("GET /api/terminal", terminalHandler)
 
-func bearerToken(r *http.Request) string {
-	h := r.Header.Get("Authorization")
-	if strings.HasPrefix(h, "Bearer ") {
-		return strings.TrimPrefix(h, "Bearer ")
+	galene, err := url.Parse(galeneURL)
+	if err != nil {
+		log.Fatal(err)
 	}
-	return ""
-}
+	mux.Handle("/galene/", http.StripPrefix("/galene", httputil.NewSingleHostReverseProxy(galene)))
 
-func jsonOK(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(v)
-}
+	mux.Handle("/", http.FileServer(http.Dir(staticDir)))
 
-func httpError(w http.ResponseWriter, msg string, code int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 0,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	log.Printf("sofiaos em %s  static=%s  galene=%s", addr, staticDir, galeneURL)
+	log.Fatal(srv.ListenAndServe())
 }
