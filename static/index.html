@@ -2,227 +2,106 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SofiaOS</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#0e0b08;--s1:#161210;--s2:#1d1814;--s3:#252019;--s4:#2e271f;
-  --a:#bf8540;--a2:#d4974e;--a3:#e8b06a;--a4:#f2c882;
+  --a:#bf8540;--a2:#d4974e;--a3:#e8b06a;
   --adim:rgba(191,133,64,0.11);--abor:rgba(191,133,64,0.2);
   --t0:#ede7de;--t1:#b8ae9e;--t2:#7a7068;--t3:#4a4238;
-  --ok:#3d8f5f;--err:#a04444;--info:#3a6fa8;
-  --r:12px;--rb:18px;
+  --ok:#3d8f5f;--err:#a04444;
+  --sb:38px;--dock:66px;--r:12px;--rb:18px;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;
-  background:var(--bg);color:var(--t0);height:100vh;display:flex;
-  flex-direction:column;overflow:hidden;font-size:13px}
-
-/* WALLPAPER */
-.wp{position:fixed;inset:0;z-index:0;overflow:hidden}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-serif;font-size:13px}
+.wp{position:fixed;inset:0;z-index:0}
 .wp svg{width:100%;height:100%}
-
-/* STATUSBAR */
-.sb{height:38px;flex-shrink:0;display:flex;align-items:center;
-  padding:0 18px;gap:10px;position:relative;z-index:20;
-  background:rgba(14,11,8,0.6)}
-.sb-logo{font-size:14px;font-weight:700;color:var(--t0);letter-spacing:-.3px}
+.statusbar{position:fixed;top:0;left:0;right:0;height:var(--sb);
+  background:rgba(14,11,8,0.72);border-bottom:1px solid rgba(191,133,64,0.08);
+  display:flex;align-items:center;padding:0 16px;gap:10px;z-index:1000}
+.sb-logo{font-size:14px;font-weight:700;letter-spacing:-.3px}
 .sb-logo span{color:var(--a3)}
-.sb-center{position:absolute;left:50%;transform:translateX(-50%);
-  font-size:13px;font-weight:600;color:var(--t1)}
-.sb-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.sb-metric{font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px}
-.sb-metric span{color:var(--t1);font-weight:500}
-.batt{display:flex;align-items:center;gap:3px}
-.batt-b{width:20px;height:10px;border:1.5px solid var(--t2);border-radius:2px;
-  padding:1.5px;display:flex;align-items:center}
-.batt-f{height:100%;background:var(--ok);border-radius:1px;width:72%}
-
-/* LAYOUT */
-.layout{flex:1;display:flex;overflow:hidden;position:relative;z-index:10}
-
-/* SIDEBAR */
-.sidebar{width:210px;flex-shrink:0;background:rgba(18,14,10,0.75);
-  border-right:1px solid var(--abor);display:flex;flex-direction:column;
-  transition:width .28s cubic-bezier(.4,0,.2,1),opacity .28s;overflow:hidden}
-.sidebar.off{width:0;opacity:0;border:none}
-.sb-inner{width:210px;padding:10px 8px;display:flex;flex-direction:column;
-  gap:1px;height:100%}
-.sb-head{padding:8px 10px 12px;border-bottom:1px solid var(--abor);margin-bottom:4px}
-.sb-name{font-size:16px;font-weight:700;color:var(--t0);letter-spacing:-.4px}
-.sb-name span{color:var(--a3)}
-.sb-ok{font-size:10px;color:var(--ok);margin-top:2px;display:flex;align-items:center;gap:4px}
-.sb-dot{width:5px;height:5px;border-radius:50%;background:var(--ok)}
-.sec{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--t3);padding:10px 10px 4px}
-.nav{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;
-  color:var(--t2);cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;
-  user-select:none}
-.nav:hover{background:var(--s3);color:var(--t1)}
-.nav.on{background:var(--adim);color:var(--a3);border:1px solid var(--abor)}
-.nav svg{width:13px;height:13px;flex-shrink:0}
-.nbadge{margin-left:auto;background:var(--a);color:#1a0f00;font-size:9px;
-  font-weight:700;padding:1px 5px;border-radius:100px}
-.sb-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--abor)}
-.add-btn{width:100%;padding:8px;background:var(--a);border:none;border-radius:10px;
-  color:#1a0f00;font-size:12px;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
-
-/* MAIN */
-.main{flex:1;overflow-y:auto;padding:18px 20px;background:transparent}
-.main::-webkit-scrollbar{width:3px}
-.main::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px}
-
-/* TOPBAR */
-.topbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.tog-btn{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.05);
-  border:1px solid var(--abor);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--t1);flex-shrink:0;transition:background .15s}
-.tog-btn:hover{background:var(--s3)}
-.tog-btn svg{width:13px;height:13px}
-.page-title{font-size:20px;font-weight:700;color:var(--t0);letter-spacing:-.5px}
-.page-sub{font-size:11px;color:var(--t2);margin-top:2px}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.scene-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
-  border-radius:100px;background:var(--adim);border:1px solid var(--abor);
-  font-size:11px;color:var(--a3);font-weight:500;cursor:pointer}
-.scene-d{width:5px;height:5px;border-radius:50%;background:var(--a2)}
-.ib{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;
-  justify-content:center;cursor:pointer;color:var(--t1);transition:background .15s}
-.ib:hover{background:var(--s3);color:var(--t0)}
-.ib svg{width:13px;height:13px}
-
-/* PANELS */
-.panel{display:none}
-.panel.active{display:block}
-
-/* APP GRID */
-.app-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
-.app-ic{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
-.app-box{width:54px;height:54px;border-radius:15px;display:flex;align-items:center;
-  justify-content:center;transition:transform .15s;position:relative}
-.app-box:hover{transform:scale(1.08) translateY(-2px)}
-.app-box:active{transform:scale(.93)}
-.app-box svg{width:22px;height:22px}
-.app-lbl{font-size:10px;color:var(--t2);text-align:center}
-.app-bdg{position:absolute;top:-3px;right:-3px;min-width:14px;height:14px;
-  border-radius:7px;background:#c03838;border:2px solid var(--bg);
-  font-size:8px;color:#fff;font-weight:700;display:flex;align-items:center;
-  justify-content:center;padding:0 2px}
-
-/* CARDS */
-.card{background:rgba(22,18,14,0.8);border:1px solid rgba(191,133,64,0.13);
-  border-radius:var(--rb);padding:15px}
-.clbl{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--t3);margin-bottom:11px}
-.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-bottom:11px}
-.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:11px}
-.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:11px}
-
-/* STAT */
-.stat{background:var(--s2);border:1px solid rgba(191,133,64,0.07);
-  border-radius:var(--r);padding:12px}
-.slbl{font-size:9.5px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
-.sval{font-size:22px;font-weight:300;color:var(--t0);line-height:1;letter-spacing:-.5px}
-.sunit{font-size:12px;color:var(--t2)}
-.snote{font-size:10px;color:var(--t3);margin-top:4px}
-.snote.ok{color:var(--ok)}
-.snote.warn{color:var(--a2)}
-
-/* GAUGE */
-.gauge{height:3px;background:var(--s4);border-radius:2px;margin-top:8px}
-.gauge-f{height:100%;border-radius:2px;background:var(--a);transition:width .6s ease}
-.gauge-f.ok{background:var(--ok)}
-.gauge-f.err{background:var(--err)}
-
-/* DEV CARDS */
-.dev{background:var(--s2);border:1px solid rgba(191,133,64,0.07);
-  border-radius:var(--r);padding:11px;cursor:pointer;transition:border-color .15s,background .15s}
-.dev:hover{border-color:var(--abor)}
-.dev.on{background:var(--adim);border-color:var(--abor)}
-.dev-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
-.dev-ico{width:32px;height:32px;border-radius:9px;background:var(--s3);
-  display:flex;align-items:center;justify-content:center}
-.dev-ico svg{width:14px;height:14px;color:var(--t2)}
-.dev.on .dev-ico{background:rgba(191,133,64,0.18)}
-.dev.on .dev-ico svg{color:var(--a3)}
-.tog{width:32px;height:18px;border-radius:100px;background:var(--s4);position:relative;
-  transition:background .2s;border:1px solid rgba(255,255,255,.06);flex-shrink:0}
-.tog.on{background:var(--a)}
-.tok{width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;
-  top:2px;left:2px;transition:transform .2s;opacity:.9}
-.tog.on .tok{transform:translateX(14px)}
-.dev-name{font-size:12px;color:var(--t1);font-weight:500}
-.dev-sub{font-size:10px;color:var(--t3);margin-top:1px}
-
-/* VPS */
-.vps-row{display:flex;align-items:center;gap:9px;padding:8px 0;
-  border-bottom:1px solid rgba(191,133,64,0.07)}
-.vps-row:last-child{border:none}
-.vps-lbl{font-size:12px;color:var(--t1);font-weight:500;min-width:50px}
-.vps-bar{flex:1;height:4px;background:var(--s4);border-radius:2px}
-.vps-fill{height:100%;border-radius:2px;transition:width .6s ease}
-.vps-val{font-size:11px;color:var(--t2);min-width:42px;text-align:right}
-.pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;
-  padding:2px 7px;border-radius:100px}
-.pill.ok{background:rgba(61,143,95,.14);color:#5bb87a;border:1px solid rgba(61,143,95,.2)}
-.pill.warn{background:rgba(191,133,64,.12);color:var(--a3);border:1px solid var(--abor)}
-.pill.live{background:rgba(61,143,95,.14);color:#5bb87a;border:1px solid rgba(61,143,95,.2);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-
-/* TERMINAL */
-.term-wrap{background:#090705;border:1px solid var(--abor);border-radius:var(--r);
-  overflow:hidden;font-family:'SF Mono','Fira Code','Consolas',monospace}
-.term-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;
-  background:var(--s2);border-bottom:1px solid rgba(191,133,64,0.1)}
-.term-dot{width:10px;height:10px;border-radius:50%}
-.term-out{padding:12px;font-size:12px;line-height:1.6;color:#c8bfb0;
-  min-height:180px;max-height:280px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
-.term-out::-webkit-scrollbar{width:3px}
-.term-out::-webkit-scrollbar-thumb{background:var(--s4)}
-.term-in{display:flex;align-items:center;gap:8px;padding:8px 12px;
-  border-top:1px solid rgba(191,133,64,0.08)}
-.term-prompt{color:var(--a3);font-size:12px;font-family:inherit;flex-shrink:0}
-.term-input{flex:1;background:transparent;border:none;outline:none;
-  color:var(--t0);font-size:12px;font-family:inherit}
-.term-status{font-size:10px;padding:2px 8px;border-radius:100px;margin-left:auto}
-.term-status.conn{background:rgba(61,143,95,.15);color:#5bb87a;border:1px solid rgba(61,143,95,.2)}
-.term-status.disc{background:rgba(160,68,68,.15);color:#c07070;border:1px solid rgba(160,68,68,.2)}
-
-/* MUSIC */
-.music-art{width:44px;height:44px;border-radius:11px;background:var(--s3);
-  flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
-.mc-btn{width:26px;height:26px;border-radius:50%;background:transparent;
-  border:none;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.mc-btn.play{background:var(--a);color:#1a0f00;width:30px;height:30px}
-.mc-btn svg{width:11px;height:11px}
-
-/* DOCK */
-.dock{height:70px;flex-shrink:0;display:flex;align-items:center;
-  justify-content:center;gap:10px;padding:0 20px;position:relative;z-index:20}
-.dock-inner{display:flex;align-items:center;gap:7px;padding:7px 14px;
-  background:rgba(20,16,12,0.85);border:1px solid var(--abor);border-radius:22px}
-.dk{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;
-  justify-content:center;cursor:pointer;position:relative;
-  transition:transform .15s,box-shadow .15s}
-.dk:hover{transform:translateY(-5px) scale(1.1)}
-.dk:active{transform:scale(.9)}
-.dk svg{width:19px;height:19px}
-.dk-d{position:absolute;bottom:-5px;width:4px;height:4px;border-radius:50%;background:var(--t1)}
-.dk-sep{width:1px;height:26px;background:rgba(191,133,64,0.14);margin:0 3px}
-
-/* GALENE CARD */
-.g-card{background:var(--s2);border:1px solid rgba(191,133,64,0.08);
-  border-radius:var(--r);padding:11px;display:flex;align-items:center;gap:11px;
-  cursor:pointer;transition:border-color .15s;margin-bottom:8px}
-.g-card:hover{border-color:var(--abor)}
-.g-card:last-child{margin-bottom:0}
-.g-av{width:34px;height:34px;border-radius:9px;background:var(--s3);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.g-av svg{width:14px;height:14px;color:var(--t2)}
-.g-card.live .g-av{background:rgba(61,143,95,.15)}
-.g-card.live .g-av svg{color:#5bb87a}
+.sb-time{position:absolute;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;color:var(--t1)}
+.sb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.sb-stat{font-size:11px;color:var(--t2)}
+.sb-stat b{color:var(--t1);font-weight:500}
+.desktop{position:fixed;top:var(--sb);left:0;right:0;bottom:var(--dock);z-index:10;overflow:hidden}
+.homescreen{position:absolute;inset:0;display:flex;flex-direction:column;padding:20px 16px 10px;overflow-y:auto}
+.homescreen::-webkit-scrollbar{display:none}
+.widgets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:600px){.widgets{grid-template-columns:repeat(2,1fr)}}
+.widget{background:rgba(22,18,14,0.82);border:1px solid rgba(191,133,64,0.13);
+  border-radius:var(--rb);padding:13px;cursor:pointer;transition:transform .15s}
+.widget:active{transform:scale(.97)}
+.wlbl{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.wval{font-size:24px;font-weight:300;color:var(--t0);letter-spacing:-.5px;line-height:1}
+.wunit{font-size:12px;color:var(--t2)}
+.wbar{height:3px;background:var(--s4);border-radius:2px;margin-top:8px}
+.wbar-f{height:100%;border-radius:2px;background:var(--a);transition:width .6s}
+.wbar-f.ok{background:var(--ok)}
+.wnote{font-size:10px;color:var(--t3);margin-top:4px}
+.apps-title{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:12px;padding:0 4px}
+.app-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 8px;margin-bottom:16px}
+@media(max-width:700px){.app-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:500px){.app-grid{grid-template-columns:repeat(4,1fr)}}
+.app{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.app-box{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;transition:transform .12s;position:relative;flex-shrink:0}
+@media(max-width:500px){.app-box{width:46px;height:46px;border-radius:12px}}
+.app-box:active{transform:scale(.88)}
+.app-box svg{width:21px;height:21px}
+.app-lbl{font-size:10px;color:var(--t2);text-align:center;white-space:nowrap;overflow:hidden;max-width:58px;text-overflow:ellipsis}
+.app-bdg{position:absolute;top:-3px;right:-3px;min-width:14px;height:14px;border-radius:7px;background:#c03838;border:2px solid var(--bg);font-size:8px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 2px}
+.win{position:absolute;background:var(--s1);border:1px solid rgba(191,133,64,0.18);border-radius:var(--rb);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:100}
+.win.focused{border-color:rgba(191,133,64,0.32);box-shadow:0 24px 80px rgba(0,0,0,.75);z-index:200}
+.win.minimized{display:none}
+.win.maximized{top:0!important;left:0!important;width:100%!important;height:100%!important;border-radius:0;border:none}
+.titlebar{height:38px;flex-shrink:0;background:var(--s2);border-bottom:1px solid rgba(191,133,64,0.1);display:flex;align-items:center;padding:0 10px;gap:7px;cursor:grab;user-select:none;-webkit-user-select:none}
+.titlebar:active{cursor:grabbing}
+.tb-dots{display:flex;gap:5px}
+.tb-dot{width:11px;height:11px;border-radius:50%;cursor:pointer;transition:opacity .15s;flex-shrink:0}
+.tb-dot:hover{opacity:.7}
+.tb-close{background:#ff5f57}
+.tb-min{background:#febc2e}
+.tb-max{background:#28c840}
+.tb-title{flex:1;text-align:center;font-size:11px;color:var(--t2);font-weight:500;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-icon{width:14px;height:14px;margin-right:4px;flex-shrink:0}
+.win-body{flex:1;overflow:hidden;position:relative;min-height:0}
+.win-body iframe{width:100%;height:100%;border:none;background:var(--bg)}
+.win-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--s1);gap:8px}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--a);animation:ldot 1.2s ease-in-out infinite}
+.ld:nth-child(2){animation-delay:.2s}
+.ld:nth-child(3){animation-delay:.4s}
+@keyframes ldot{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+.win-blocked{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--s1);padding:24px;text-align:center}
+.win-blocked p{font-size:12px;color:var(--t2);line-height:1.6}
+.win-blocked button{padding:8px 20px;background:var(--a);border:none;border-radius:10px;color:#1a0f00;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.native{flex:1;overflow-y:auto;padding:16px;min-height:0}
+.native::-webkit-scrollbar{width:3px}
+.native::-webkit-scrollbar-thumb{background:var(--s4)}
+.term-out{font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#c8bfb0;line-height:1.6;white-space:pre-wrap;word-break:break-all;min-height:160px;margin-bottom:8px}
+.term-in{display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,.3);border-radius:8px}
+.term-prompt{color:var(--a3);font-family:monospace;font-size:12px;flex-shrink:0}
+.term-field{flex:1;background:transparent;border:none;outline:none;color:var(--t0);font-size:12px;font-family:monospace}
+.cbtn{padding:5px 11px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}
+.vrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid rgba(191,133,64,0.07)}
+.vrow:last-child{border:none}
+.vlbl{font-size:12px;color:var(--t1);min-width:55px}
+.vbar{flex:1;height:4px;background:var(--s4);border-radius:2px}
+.vfill{height:100%;border-radius:2px;transition:width .6s}
+.vval{font-size:11px;color:var(--t2);min-width:50px;text-align:right}
+.vpill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(61,143,95,.14);color:#5bb87a;border:1px solid rgba(61,143,95,.2)}
+.dock{position:fixed;bottom:0;left:0;right:0;height:var(--dock);display:flex;align-items:center;justify-content:center;padding:0 16px 6px;z-index:1000}
+.dock-inner{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(18,14,10,0.88);border:1px solid var(--abor);border-radius:22px;max-width:100%;overflow-x:auto}
+.dock-inner::-webkit-scrollbar{display:none}
+.dk{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;transition:transform .15s}
+.dk:hover{transform:translateY(-4px) scale(1.08)}
+.dk:active{transform:scale(.85)}
+.dk svg{width:18px;height:18px}
+.dk-d{position:absolute;bottom:-5px;width:4px;height:4px;border-radius:50%;background:var(--a3)}
+.dk-sep{width:1px;height:24px;background:rgba(191,133,64,0.15);margin:0 2px;flex-shrink:0}
+@media(max-width:768px){.titlebar{cursor:default}.win.maximized{border-radius:0!important}}
 </style>
 </head>
 <body>
@@ -230,558 +109,254 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',sans-
 <div class="wp">
 <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="800" fill="#0e0b08"/>
-  <ellipse cx="900" cy="180" rx="500" ry="320" fill="#190e04" opacity=".65"/>
-  <ellipse cx="180" cy="650" rx="380" ry="250" fill="#110d06" opacity=".5"/>
+  <ellipse cx="900" cy="180" rx="500" ry="320" fill="#190e04" opacity=".6"/>
+  <ellipse cx="150" cy="650" rx="380" ry="250" fill="#110d06" opacity=".45"/>
   <circle cx="950" cy="150" r="160" fill="none" stroke="#bf8540" stroke-width=".5" opacity=".07"/>
-  <circle cx="950" cy="150" r="100" fill="none" stroke="#bf8540" stroke-width=".4" opacity=".05"/>
-  <line x1="0" y1="720" x2="1200" y2="700" stroke="#bf8540" stroke-width=".4" opacity=".05"/>
 </svg>
 </div>
 
-<!-- STATUS BAR -->
-<div class="sb">
-  <div class="sb-logo">Sofia<span>OS</span></div>
-  <div class="sb-center" id="clock">--:--</div>
+<div class="statusbar">
+  <span class="sb-logo">Sofia<span>OS</span></span>
+  <span class="sb-time" id="clock">--:--</span>
   <div class="sb-right">
-    <div class="sb-metric">CPU <span id="sbCpu">…</span></div>
-    <div class="sb-metric">RAM <span id="sbRam">…</span></div>
-    <div class="sb-metric">Disk <span id="sbDisk">…</span></div>
-    <div class="batt">
-      <div class="batt-b"><div class="batt-f"></div></div>
-      <span style="font-size:11px;color:var(--t2);margin-left:2px">VPS</span>
-    </div>
+    <span class="sb-stat">CPU <b id="sbCpu">…</b></span>
+    <span class="sb-stat">RAM <b id="sbRam">…</b></span>
+    <span class="sb-stat" id="sbUptimeWrap" style="display:none">up <b id="sbUp">…</b></span>
   </div>
 </div>
 
-<!-- LAYOUT -->
-<div class="layout">
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-<div class="sb-inner">
-  <div class="sb-head">
-    <div class="sb-name">Sofia<span>OS</span></div>
-    <div class="sb-ok"><div class="sb-dot"></div><span id="uptimeStr">online</span></div>
-  </div>
-
-  <div class="sec">Overview</div>
-  <div class="nav on" onclick="showPanel('dashboard',this)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7L8 2l6 5v7H2V7z"/></svg>Dashboard
-  </div>
-  <div class="nav" onclick="showPanel('apps',this)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Apps
-  </div>
-
-  <div class="sec">Infra</div>
-  <div class="nav" onclick="showPanel('vps',this)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="4" rx="1"/><rect x="1" y="9" width="14" height="4" rx="1"/><circle cx="12.5" cy="5" r=".8" fill="currentColor"/><circle cx="12.5" cy="11" r=".8" fill="currentColor"/></svg>VPS Oracle
-  </div>
-  <div class="nav" onclick="showPanel('galene',this)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h8v8H2zM10 6l4-2v8l-4-2V6z"/></svg>Galene
-  </div>
-  <div class="nav" onclick="showPanel('terminal',this)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 7l2 2-2 2M9 11h2"/></svg>Terminal
-    <span class="nbadge" id="termBadge" style="display:none">●</span>
-  </div>
-
-  <div class="sec">Workspace</div>
-  <div class="nav" onclick="openLink('https://studiohallel.online/workspace.html')">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Workspace ↗
-  </div>
-  <div class="nav" onclick="openLink('https://studiohallel.online/reunioes.html')">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="14" height="9" rx="1"/><path d="M5 5V4a3 3 0 0 1 6 0v1"/></svg>Reuniões ↗
-  </div>
-
-  <div class="sb-foot">
-    <div class="nav" style="margin-bottom:6px">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14s1-4 6-4 6 4 6 4"/></svg>Julios · Admin
+<div class="desktop" id="desktop">
+  <div class="homescreen" id="homescreen">
+    <div class="widgets">
+      <div class="widget" onclick="openApp('metrics')">
+        <div class="wlbl">CPU</div>
+        <div><span class="wval" id="wCpu">0</span><span class="wunit">%</span></div>
+        <div class="wbar"><div class="wbar-f ok" id="wCpuBar" style="width:0%"></div></div>
+        <div class="wnote">oracle vps</div>
+      </div>
+      <div class="widget" onclick="openApp('metrics')">
+        <div class="wlbl">RAM</div>
+        <div><span class="wval" id="wRam">…</span><span class="wunit">MB</span></div>
+        <div class="wbar"><div class="wbar-f" id="wRamBar" style="width:0%"></div></div>
+        <div class="wnote" id="wRamNote">de 1024MB</div>
+      </div>
+      <div class="widget" onclick="openApp('metrics')">
+        <div class="wlbl">Uptime</div>
+        <div><span class="wval" id="wUp" style="font-size:18px">…</span></div>
+        <div class="wbar"><div class="wbar-f ok" style="width:100%"></div></div>
+        <div class="wnote" style="color:var(--ok)">sistema nominal</div>
+      </div>
     </div>
-    <button class="add-btn" onclick="refreshMetrics()">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M2 8a6 6 0 0 1 10.5-4M14 8a6 6 0 0 1-10.5 4M14 4v4h-4M2 12V8H6"/></svg>
-      Atualizar Métricas
-    </button>
+    <div class="apps-title">Apps</div>
+    <div class="app-grid" id="appGrid"></div>
   </div>
 </div>
-</div>
 
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <div class="tog-btn" onclick="document.getElementById('sidebar').classList.toggle('off')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
-    </div>
-    <div>
-      <div class="page-title" id="pageTitle">Dashboard</div>
-      <div class="page-sub" id="pageSub">SofiaOS · Oracle VPS · Brazil East</div>
-    </div>
-    <div class="topbar-right">
-      <div class="scene-pill"><div class="scene-d"></div>Sistema Nominal</div>
-      <div class="ib" onclick="refreshMetrics()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0 1 10.5-4M14 8a6 6 0 0 1-10.5 4M14 4v4h-4M2 12V8H6"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div class="panel active" id="panel-dashboard">
-    <div class="g3" style="margin-bottom:12px">
-      <div class="stat">
-        <div class="slbl">CPU</div>
-        <div><span class="sval" id="cpuVal">—</span><span class="sunit">%</span></div>
-        <div class="gauge"><div class="gauge-f ok" id="cpuBar" style="width:0%"></div></div>
-        <div class="snote" id="cpuNote">aguardando…</div>
-      </div>
-      <div class="stat">
-        <div class="slbl">RAM</div>
-        <div><span class="sval" id="ramVal">—</span><span class="sunit">MB</span></div>
-        <div class="gauge"><div class="gauge-f" id="ramBar" style="width:0%"></div></div>
-        <div class="snote" id="ramNote">aguardando…</div>
-      </div>
-      <div class="stat">
-        <div class="slbl">Disco</div>
-        <div><span class="sval" id="diskVal">—</span><span class="sunit">GB</span></div>
-        <div class="gauge"><div class="gauge-f ok" id="diskBar" style="width:0%"></div></div>
-        <div class="snote" id="diskNote">aguardando…</div>
-      </div>
-    </div>
-
-    <div class="g2" style="margin-bottom:12px">
-      <div class="card">
-        <div class="clbl">Servidor · Oracle Cloud</div>
-        <div class="vps-row">
-          <span class="vps-lbl">CPU</span>
-          <div class="vps-bar"><div class="vps-fill ok" id="vCpu" style="width:0%;background:var(--ok)"></div></div>
-          <span class="vps-val" id="vCpuVal">—</span>
-          <div class="pill ok" id="vCpuPill">ok</div>
-        </div>
-        <div class="vps-row">
-          <span class="vps-lbl">RAM</span>
-          <div class="vps-bar"><div class="vps-fill" id="vRam" style="width:0%;background:var(--a)"></div></div>
-          <span class="vps-val" id="vRamVal">—</span>
-          <div class="pill warn" id="vRamPill">—</div>
-        </div>
-        <div class="vps-row">
-          <span class="vps-lbl">Disco</span>
-          <div class="vps-bar"><div class="vps-fill" id="vDisk" style="width:0%;background:var(--ok)"></div></div>
-          <span class="vps-val" id="vDiskVal">—</span>
-          <div class="pill ok">ok</div>
-        </div>
-        <div class="vps-row">
-          <span class="vps-lbl">Uptime</span>
-          <div class="vps-bar" style="background:transparent"></div>
-          <span class="vps-val" style="color:var(--ok)" id="vUptime">—</span>
-          <div class="pill ok">up</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="clbl">Galene · Salas</div>
-        <div class="g-card live" onclick="openLink('https://conference.studiohallel.online:8443/group/equipe/')">
-          <div class="g-av">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h8v8H2zM10 6l4-2v8l-4-2V6z"/></svg>
-          </div>
-          <div style="flex:1">
-            <div style="font-size:12px;color:var(--t1);font-weight:500">equipe</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:1px">Sala interna</div>
-          </div>
-          <div class="pill live">LIVE</div>
-        </div>
-        <div class="g-card" onclick="openLink('https://conference.studiohallel.online:8443/group/publico/')">
-          <div class="g-av">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h8v8H2zM10 6l4-2v8l-4-2V6z"/></svg>
-          </div>
-          <div style="flex:1">
-            <div style="font-size:12px;color:var(--t1);font-weight:500">publico</div>
-            <div style="font-size:10px;color:var(--t3);margin-top:1px">Sala de clientes</div>
-          </div>
-          <div class="pill ok" style="background:var(--s3);color:var(--t3);border-color:transparent">idle</div>
-        </div>
-        <button onclick="showPanel('terminal', document.querySelector('.nav:nth-child(7)'))" style="width:100%;margin-top:8px;padding:8px;background:var(--adim);border:1px solid var(--abor);border-radius:10px;color:var(--a3);font-size:11px;cursor:pointer;font-family:inherit;font-weight:500">
-          Abrir Terminal SSH →
-        </button>
-      </div>
-    </div>
-
-    <div class="g4">
-      <div class="dev on" onclick="toggleDev(this)">
-        <div class="dev-top">
-          <div class="dev-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg></div>
-          <div class="tog on"><div class="tok"></div></div>
-        </div>
-        <div class="dev-name">Galene</div>
-        <div class="dev-sub">Running</div>
-      </div>
-      <div class="dev on" onclick="toggleDev(this)">
-        <div class="dev-top">
-          <div class="dev-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="4" rx="1"/><rect x="1" y="9" width="14" height="4" rx="1"/></svg></div>
-          <div class="tog on"><div class="tok"></div></div>
-        </div>
-        <div class="dev-name">SofiaOS API</div>
-        <div class="dev-sub">:80 active</div>
-      </div>
-      <div class="dev" onclick="toggleDev(this)">
-        <div class="dev-top">
-          <div class="dev-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zM8 5v4l3 1.5"/></svg></div>
-          <div class="tog"><div class="tok"></div></div>
-        </div>
-        <div class="dev-name">Cron Jobs</div>
-        <div class="dev-sub">Idle</div>
-      </div>
-      <div class="dev" onclick="toggleDev(this)">
-        <div class="dev-top">
-          <div class="dev-ico"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="12" height="8" rx="1"/><path d="M5 5V4a3 3 0 0 1 6 0v1"/></svg></div>
-          <div class="tog"><div class="tok"></div></div>
-        </div>
-        <div class="dev-name">Firewall</div>
-        <div class="dev-sub">iptables</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- APPS -->
-  <div class="panel" id="panel-apps">
-    <div class="clbl" style="margin-bottom:14px">Biblioteca de Apps</div>
-    <div class="app-grid">
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/workspace.html')">
-        <div class="app-box" style="background:#251e10">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#bf8540" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
-        </div><span class="app-lbl">Workspace</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/reunioes.html')">
-        <div class="app-box" style="background:#1a1e2a">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#4a7abf" stroke-width="1.5"><rect x="2" y="5" width="18" height="14" rx="2"/><path d="M2 10h18M8 5V3M14 5V3"/></svg>
-        </div><span class="app-lbl">Reuniões</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://conference.studiohallel.online:8443/group/equipe/')">
-        <div class="app-box" style="background:#1c2a1a">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#4a9e6a" stroke-width="1.5"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M16 8l4-2v8l-4-2V8z"/></svg>
-          <div class="app-bdg">●</div>
-        </div><span class="app-lbl">Galene</span>
-      </div>
-      <div class="app-ic" onclick="showPanel('terminal',null)">
-        <div class="app-box" style="background:#1a1a1a">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#8a8a8a" stroke-width="1.5"><rect x="2" y="4" width="18" height="14" rx="2"/><path d="M6 9l3 3-3 3M12 15h5"/></svg>
-        </div><span class="app-lbl">Terminal</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/admin.html')">
-        <div class="app-box" style="background:#1a1210">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#bf6040" stroke-width="1.5"><circle cx="11" cy="11" r="4"/><path d="M11 2v3M11 17v3M2 11h3M17 11h3M4.9 4.9l2.1 2.1M15 15l2.1 2.1"/></svg>
-        </div><span class="app-lbl">Admin</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/sofia.html')">
-        <div class="app-box" style="background:#221420">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#9b59b6" stroke-width="1.5"><circle cx="11" cy="9" r="4"/><path d="M4 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
-        </div><span class="app-lbl">Sofia IA</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/vendas.html')">
-        <div class="app-box" style="background:#101a10">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#40a060" stroke-width="1.5"><path d="M3 18L8 8l4 5 3-4 4 9"/></svg>
-        </div><span class="app-lbl">Vendas</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/qualidade.html')">
-        <div class="app-box" style="background:#1a1820">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#7a7abf" stroke-width="1.5"><path d="M11 2l2.4 6.6H20l-5.7 4.1 2.2 6.8L11 15.4l-5.5 4.1 2.2-6.8L2 8.6h6.6z"/></svg>
-        </div><span class="app-lbl">QA</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://studiohallel.online/command.html')">
-        <div class="app-box" style="background:#1a1212">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#bf4040" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l3 3"/></svg>
-        </div><span class="app-lbl">Command</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://cloud.oracle.com')">
-        <div class="app-box" style="background:#141820">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#4a7abf" stroke-width="1.5"><path d="M6 16a4 4 0 0 1 0-8h1a5 5 0 0 1 9 2h1a3 3 0 0 1 0 6H6z"/></svg>
-        </div><span class="app-lbl">Oracle</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://dash.cloudflare.com')">
-        <div class="app-box" style="background:#1e1608">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#e8a857" stroke-width="1.5"><path d="M15 14.5s1.5-.5 1.5-2.5-2-3-3.5-2.5c0-2-1.5-4-4-4S5 7 5 9.5C3.5 9.5 2 10.5 2 12.5S3.5 14.5 5 14.5"/></svg>
-        </div><span class="app-lbl">Cloudflare</span>
-      </div>
-      <div class="app-ic" onclick="openLink('https://github.com/studiohallel7')">
-        <div class="app-box" style="background:#141414">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#aaaaaa" stroke-width="1.5"><path d="M11 2C6 2 2 6 2 11c0 4 2.6 7.4 6.2 8.6.5.1.6-.2.6-.5v-1.7c-2.6.6-3.1-1.3-3.1-1.3-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.8.8.1-.6.3-1.1.6-1.3-2.1-.2-4.3-1-4.3-4.7 0-1 .4-1.9 1-2.6-.1-.2-.4-1.2.1-2.5 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.5.6.7 1 1.6 1 2.6 0 3.7-2.2 4.5-4.3 4.7.3.3.6.9.6 1.8v2.6c0 .3.1.6.6.5C17.4 18.4 20 15 20 11c0-5-4-9-9-9z"/></svg>
-        </div><span class="app-lbl">GitHub</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- VPS -->
-  <div class="panel" id="panel-vps">
-    <div class="card" style="margin-bottom:12px">
-      <div class="clbl">Oracle VPS · Brazil East (São Paulo) · Always Free</div>
-      <div class="vps-row">
-        <span class="vps-lbl">CPU</span>
-        <div class="vps-bar"><div class="vps-fill" id="vps-cpu-bar" style="width:0%;background:var(--ok)"></div></div>
-        <span class="vps-val" id="vps-cpu-val">—</span>
-        <div class="pill ok">ok</div>
-      </div>
-      <div class="vps-row">
-        <span class="vps-lbl">RAM</span>
-        <div class="vps-bar"><div class="vps-fill" id="vps-ram-bar" style="width:0%;background:var(--a)"></div></div>
-        <span class="vps-val" id="vps-ram-val">—</span>
-        <div class="pill warn" id="vps-ram-pill">—</div>
-      </div>
-      <div class="vps-row">
-        <span class="vps-lbl">Disco</span>
-        <div class="vps-bar"><div class="vps-fill" id="vps-disk-bar" style="width:0%;background:var(--ok)"></div></div>
-        <span class="vps-val" id="vps-disk-val">—</span>
-        <div class="pill ok">ok</div>
-      </div>
-      <div class="vps-row">
-        <span class="vps-lbl">Load</span>
-        <div class="vps-bar" style="background:transparent"></div>
-        <span class="vps-val" id="vps-load-val" style="color:var(--ok)">—</span>
-        <div class="pill ok">nominal</div>
-      </div>
-      <div class="vps-row">
-        <span class="vps-lbl">Uptime</span>
-        <div class="vps-bar" style="background:transparent"></div>
-        <span class="vps-val" id="vps-uptime-val" style="color:var(--ok)">—</span>
-        <div class="pill ok">up</div>
-      </div>
-    </div>
-    <div class="g2">
-      <div class="stat">
-        <div class="slbl">RAM livre</div>
-        <div><span class="sval" id="vps-ram-free">—</span><span class="sunit">MB</span></div>
-        <div class="snote ok">de 1024MB total</div>
-      </div>
-      <div class="stat">
-        <div class="slbl">Disco livre</div>
-        <div><span class="sval" id="vps-disk-free">—</span><span class="sunit">GB</span></div>
-        <div class="snote ok">de ~200GB total</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- GALENE -->
-  <div class="panel" id="panel-galene">
-    <div class="card" style="margin-bottom:12px">
-      <div class="clbl">Galene · Servidor de Videoconferência</div>
-      <div class="g-card live" onclick="openLink('https://conference.studiohallel.online:8443/group/equipe/')">
-        <div class="g-av"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h8v8H2zM10 6l4-2v8l-4-2V6z"/></svg></div>
-        <div style="flex:1">
-          <div style="font-size:13px;color:var(--t0);font-weight:500">equipe</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">conference.studiohallel.online:8443/group/equipe/</div>
-        </div>
-        <div class="pill live">LIVE</div>
-      </div>
-      <div class="g-card" onclick="openLink('https://conference.studiohallel.online:8443/group/publico/')">
-        <div class="g-av"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h8v8H2zM10 6l4-2v8l-4-2V6z"/></svg></div>
-        <div style="flex:1">
-          <div style="font-size:13px;color:var(--t0);font-weight:500">publico</div>
-          <div style="font-size:11px;color:var(--t2);margin-top:2px">conference.studiohallel.online:8443/group/publico/</div>
-        </div>
-        <div class="pill ok" style="background:var(--s3);color:var(--t3);border-color:transparent;animation:none">idle</div>
-      </div>
-    </div>
-    <div class="stat" style="margin-bottom:12px">
-      <div class="slbl">Porta</div>
-      <div><span class="sval" style="font-size:18px">8443</span><span class="sunit"> HTTPS/WSS</span></div>
-      <div class="snote ok">Acessível externamente</div>
-    </div>
-  </div>
-
-  <!-- TERMINAL -->
-  <div class="panel" id="panel-terminal">
-    <div class="term-wrap">
-      <div class="term-bar">
-        <div class="term-dot" style="background:#ff5f57"></div>
-        <div class="term-dot" style="background:#febc2e"></div>
-        <div class="term-dot" style="background:#28c840"></div>
-        <span style="font-size:11px;color:var(--t2);margin-left:6px;font-family:monospace">bash · galena</span>
-        <div class="term-status disc" id="termStatus" style="margin-left:auto">desconectado</div>
-      </div>
-      <div class="term-out" id="termOut">[sofiaos] Clique em Conectar para iniciar sessão
-</div>
-      <div class="term-in">
-        <span class="term-prompt">$</span>
-        <input class="term-input" id="termInput" placeholder="digite um comando..." onkeydown="termKey(event)" disabled>
-        <button onclick="toggleTerm()" id="termConnBtn" style="padding:4px 10px;background:var(--a);border:none;border-radius:7px;color:#1a0f00;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Conectar</button>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /main -->
-</div><!-- /layout -->
-
-<!-- DOCK -->
 <div class="dock">
-  <div class="dock-inner">
-    <div class="dk" style="background:#251e10" title="Dashboard" onclick="showPanel('dashboard',null)">
-      <svg viewBox="0 0 22 22" fill="none" stroke="#bf8540" stroke-width="1.5"><path d="M2 9L11 2l9 7v11H2V9z"/></svg>
-      <div class="dk-d"></div>
-    </div>
-    <div class="dk" style="background:#1c2a1a" title="Galene" onclick="openLink('https://conference.studiohallel.online:8443/group/equipe/')">
-      <svg viewBox="0 0 22 22" fill="none" stroke="#4a9e6a" stroke-width="1.5"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M16 8l4-2v8l-4-2V8z"/></svg>
-    </div>
-    <div class="dk" style="background:#251e10" title="Workspace" onclick="openLink('https://studiohallel.online/workspace.html')">
-      <svg viewBox="0 0 22 22" fill="none" stroke="#bf8540" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
-    </div>
-    <div class="dk" style="background:#221420" title="Sofia IA" onclick="openLink('https://studiohallel.online/sofia.html')">
-      <svg viewBox="0 0 22 22" fill="none" stroke="#9b59b6" stroke-width="1.5"><circle cx="11" cy="9" r="4"/><path d="M4 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
+  <div class="dock-inner" id="dockInner">
+    <div class="dk" style="background:#0f1a0f" onclick="goHome()">
+      <svg viewBox="0 0 22 22" fill="none" stroke="#4a9e6a" stroke-width="1.5"><path d="M2 9L11 2l9 7v11H2V9z"/></svg>
     </div>
     <div class="dk-sep"></div>
-    <div class="dk" style="background:#1a1a1a" title="Terminal" onclick="showPanel('terminal',null)">
+    <div id="dockApps" style="display:contents"></div>
+    <div class="dk-sep"></div>
+    <div class="dk" style="background:#1a1a1a" onclick="openApp('terminal')">
       <svg viewBox="0 0 22 22" fill="none" stroke="#8a8a8a" stroke-width="1.5"><rect x="2" y="4" width="18" height="14" rx="2"/><path d="M6 9l3 3-3 3M12 15h5"/></svg>
     </div>
-    <div class="dk" style="background:#141820" title="VPS" onclick="showPanel('vps',null)">
+    <div class="dk" style="background:#141820" onclick="openApp('metrics')">
       <svg viewBox="0 0 22 22" fill="none" stroke="#4a7abf" stroke-width="1.5"><rect x="1" y="4" width="20" height="6" rx="1"/><rect x="1" y="12" width="20" height="6" rx="1"/><circle cx="18" cy="7" r="1" fill="#4a7abf"/><circle cx="18" cy="15" r="1" fill="#4a7abf"/></svg>
-    </div>
-    <div class="dk-sep"></div>
-    <div class="dk" style="background:#101a10" title="Apps" onclick="showPanel('apps',null)">
-      <svg viewBox="0 0 22 22" fill="none" stroke="#40a060" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
     </div>
   </div>
 </div>
 
 <script>
-// ── CLOCK ──
-function tick(){
-  const n=new Date();
-  document.getElementById('clock').textContent=
-    n.getHours()+':'+String(n.getMinutes()).padStart(2,'0');
-}
-tick();setInterval(tick,10000);
+const APPS=[
+  {id:'workspace',label:'Workspace',bg:'#251e10',stroke:'#bf8540',url:'https://studiohallel.online/workspace.html',icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/>'},
+  {id:'reunioes',label:'Reuniões',bg:'#1a1e2a',stroke:'#4a7abf',url:'https://studiohallel.online/reunioes.html',icon:'<rect x="2" y="5" width="18" height="14" rx="2"/><path d="M2 10h18M8 5V3M14 5V3"/>'},
+  {id:'galene',label:'Galene',bg:'#1c2a1a',stroke:'#4a9e6a',url:'https://conference.studiohallel.online:8443/group/equipe/',badge:'●',icon:'<rect x="2" y="4" width="14" height="10" rx="2"/><path d="M16 8l4-2v8l-4-2V8z"/>'},
+  {id:'sofia',label:'Sofia IA',bg:'#221420',stroke:'#9b59b6',url:'https://studiohallel.online/sofia.html',icon:'<circle cx="11" cy="9" r="4"/><path d="M4 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>'},
+  {id:'admin',label:'Admin',bg:'#1a1210',stroke:'#bf6040',url:'https://studiohallel.online/admin.html',icon:'<circle cx="11" cy="11" r="4"/><path d="M11 2v3M11 17v3M2 11h3M17 11h3"/>'},
+  {id:'vendas',label:'Vendas',bg:'#101a10',stroke:'#40a060',url:'https://studiohallel.online/vendas.html',icon:'<path d="M3 18L8 8l4 5 3-4 4 9"/>'},
+  {id:'qualidade',label:'QA',bg:'#1a1820',stroke:'#7a7abf',url:'https://studiohallel.online/qualidade.html',icon:'<path d="M11 2l2.4 6.6H20l-5.7 4.1 2.2 6.8L11 15.4l-5.5 4.1 2.2-6.8L2 8.6h6.6z"/>'},
+  {id:'command',label:'Command',bg:'#1a1212',stroke:'#bf4040',url:'https://studiohallel.online/command.html',icon:'<circle cx="11" cy="11" r="8"/><path d="M11 7v4l3 3"/>'},
+  {id:'terminal',label:'Terminal',bg:'#1a1a1a',stroke:'#8a8a8a',native:true,icon:'<rect x="2" y="4" width="18" height="14" rx="2"/><path d="M6 9l3 3-3 3M12 15h5"/>'},
+  {id:'metrics',label:'Métricas',bg:'#141820',stroke:'#4a7abf',native:true,icon:'<rect x="1" y="4" width="20" height="6" rx="1"/><rect x="1" y="12" width="20" height="6" rx="1"/><circle cx="18" cy="7" r="1" fill="#4a7abf"/><circle cx="18" cy="15" r="1" fill="#4a7abf"/>'},
+  {id:'oracle',label:'Oracle',bg:'#141820',stroke:'#4a7abf',url:'https://cloud.oracle.com',external:true,icon:'<path d="M6 16a4 4 0 0 1 0-8h1a5 5 0 0 1 9 2h1a3 3 0 0 1 0 6H6z"/>'},
+  {id:'cloudflare',label:'Cloudflare',bg:'#1e1608',stroke:'#e8a857',url:'https://dash.cloudflare.com',external:true,icon:'<path d="M15 14.5s1.5-.5 1.5-2.5-2-3-3.5-2.5c0-2-1.5-4-4-4S5 7 5 9.5C3.5 9.5 2 10.5 2 12.5S3.5 14.5 5 14.5"/>'},
+  {id:'github',label:'GitHub',bg:'#141414',stroke:'#aaaaaa',url:'https://github.com/studiohallel7',external:true,icon:'<path d="M11 2C6 2 2 6 2 11c0 4 2.6 7.4 6.2 8.6.5.1.6-.2.6-.5v-1.7c-2.6.6-3.1-1.3-3.1-1.3-.4-1.1-1-1.4-1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.8.8.1-.6.3-1.1.6-1.3-2.1-.2-4.3-1-4.3-4.7 0-1 .4-1.9 1-2.6-.1-.2-.4-1.2.1-2.5 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.5.6.7 1 1.6 1 2.6 0 3.7-2.2 4.5-4.3 4.7.3.3.6.9.6 1.8v2.6c0 .3.1.6.6.5C17.4 18.4 20 15 20 11c0-5-4-9-9-9z"/>'},
+];
 
-// ── PANELS ──
-function showPanel(id, navEl){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
-  if(navEl) navEl.classList.add('on');
-  const titles={dashboard:'Dashboard',apps:'App Library',vps:'VPS Oracle',
-    galene:'Galene',terminal:'Terminal SSH'};
-  document.getElementById('pageTitle').textContent=titles[id]||id;
-}
+// render app grid
+const grid=document.getElementById('appGrid');
+APPS.forEach(a=>{
+  const el=document.createElement('div');
+  el.className='app';
+  el.innerHTML=`<div class="app-box" style="background:${a.bg}" onclick="openApp('${a.id}')"><svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="${a.stroke}" stroke-width="1.5">${a.icon}</svg>${a.badge?`<div class="app-bdg">${a.badge}</div>`:''}</div><span class="app-lbl">${a.label}</span>`;
+  grid.appendChild(el);
+});
 
-// ── LINKS ──
-function openLink(url){ window.open(url,'_blank'); }
+// window manager
+const wins={};
+let zTop=200;
+const mob=()=>window.innerWidth<=768;
 
-// ── DEVICE TOGGLE ──
-function toggleDev(el){
-  el.classList.toggle('on');
-  el.querySelector('.tog').classList.toggle('on');
-}
-
-// ── METRICS ──
-let metricsData=null;
-async function refreshMetrics(){
-  try{
-    const r=await fetch('/api/metrics');
-    const d=await r.json();
-    metricsData=d;
-    applyMetrics(d);
-  }catch(e){
-    console.warn('metrics error',e);
+function openApp(id){
+  const a=APPS.find(x=>x.id===id);
+  if(!a) return;
+  if(a.external){window.open(a.url,'_blank');return;}
+  if(wins[id]){wins[id].classList.remove('minimized');focusWin(id);return;}
+  const desk=document.getElementById('desktop');
+  const dw=desk.offsetWidth,dh=desk.offsetHeight;
+  let w=mob()?dw:Math.min(980,dw*.85);
+  let h=mob()?dh:Math.min(700,dh*.88);
+  const ox=Object.keys(wins).length;
+  const x=mob()?0:Math.max(0,Math.min((dw-w)/2+ox*22,dw-w));
+  const y=mob()?0:Math.max(0,Math.min((dh-h)/2+ox*22,dh-h));
+  const win=document.createElement('div');
+  win.className='win focused';
+  win.id='win-'+id;
+  win.style.cssText=`width:${w}px;height:${h}px;left:${x}px;top:${y}px`;
+  // titlebar
+  const tb=document.createElement('div');
+  tb.className='titlebar';
+  tb.innerHTML=`<div class="tb-dots"><div class="tb-dot tb-close" onclick="closeWin('${id}')"></div><div class="tb-dot tb-min" onclick="minWin('${id}')"></div><div class="tb-dot tb-max" onclick="maxWin('${id}')"></div></div><svg class="tb-icon" viewBox="0 0 22 22" fill="none" stroke="${a.stroke}" stroke-width="1.5">${a.icon}</svg><div class="tb-title">${a.label}</div>`;
+  win.appendChild(tb);
+  // body
+  const body=document.createElement('div');
+  body.className='win-body';
+  if(a.native){
+    const na=document.createElement('div');
+    na.className='native';
+    if(id==='terminal') na.innerHTML=termHTML();
+    if(id==='metrics') na.innerHTML=metricsHTML();
+    body.appendChild(na);
+    win.appendChild(body);
+    if(id==='metrics') setTimeout(renderMetrics,80);
+  } else {
+    const loader=document.createElement('div');
+    loader.className='win-loader';
+    loader.innerHTML='<div class="ld"></div><div class="ld"></div><div class="ld"></div>';
+    body.appendChild(loader);
+    const fr=document.createElement('iframe');
+    fr.src=a.url;
+    fr.style.cssText='opacity:0;transition:opacity .3s';
+    fr.allow='camera;microphone;display-capture;fullscreen';
+    fr.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation');
+    fr.onload=()=>{loader.style.display='none';fr.style.opacity='1';};
+    body.appendChild(fr);
+    setTimeout(()=>{if(fr.style.opacity==='0')blocked(body,a);},9000);
+    win.appendChild(body);
   }
+  if(!mob()) drag(win,tb);
+  win.addEventListener('mousedown',()=>focusWin(id));
+  desk.appendChild(win);
+  wins[id]=win;
+  addDk(id,a);
 }
 
-function applyMetrics(d){
-  // statusbar
-  document.getElementById('sbCpu').textContent=d.cpu_percent+'%';
-  document.getElementById('sbRam').textContent=d.ram_used_mb+'MB';
-  document.getElementById('sbDisk').textContent=d.disk_used_gb+'GB';
+function blocked(body,a){
+  body.innerHTML=`<div class="win-blocked"><p><b style="color:var(--t1)">${a.label}</b> bloqueou o iframe.<br>Política de segurança do servidor.</p><button onclick="window.open('${a.url}','_blank')">Abrir em nova aba ↗</button></div>`;
+}
+function closeWin(id){wins[id]?.remove();delete wins[id];document.getElementById('dk-'+id)?.remove();if(id==='terminal'&&ws){ws.close();ws=null;}}
+function minWin(id){wins[id]?.classList.add('minimized');}
+function maxWin(id){wins[id]?.classList.toggle('maximized');}
+function focusWin(id){Object.values(wins).forEach(w=>w.classList.remove('focused'));if(wins[id]){wins[id].classList.add('focused');wins[id].style.zIndex=++zTop;}}
+function goHome(){Object.values(wins).forEach(w=>w.classList.add('minimized'));}
 
-  // uptime string
-  const u=d.uptime_seconds;
-  const days=Math.floor(u/86400);
-  const hrs=Math.floor((u%86400)/3600);
-  const uptStr=days>0?`${days}d ${hrs}h`:`${hrs}h`;
-  document.getElementById('uptimeStr').textContent='up '+uptStr;
-  document.getElementById('vUptime').textContent=uptStr;
-
-  // dashboard stats
-  setMetric('cpuVal','cpuBar','cpuNote',d.cpu_percent,'%','CPU','ok');
-  setMetric('ramVal','ramBar','ramNote',d.ram_used_mb,'MB','RAM',d.ram_percent>80?'warn':'ok');
-  setMetric('diskVal','diskBar','diskNote',d.disk_used_gb,'GB','Disco','ok');
-
-  // dashboard vps card
-  setBar('vCpu','vCpuVal',d.cpu_percent,'%');
-  setBar('vRam','vRamVal',d.ram_percent,'%');
-  setBar('vDisk','vDiskVal',d.disk_percent,'%');
-  document.getElementById('vRamPill').textContent=d.ram_percent+'%';
-
-  // vps panel
-  setBar('vps-cpu-bar','vps-cpu-val',d.cpu_percent,'%');
-  setBar('vps-ram-bar','vps-ram-val',d.ram_percent,'%');
-  setBar('vps-disk-bar','vps-disk-val',d.disk_percent,'%');
-  document.getElementById('vps-load-val').textContent=d.load1;
-  document.getElementById('vps-uptime-val').textContent=uptStr;
-  document.getElementById('vps-ram-free').textContent=Math.round(1024-d.ram_used_mb);
-  document.getElementById('vps-disk-free').textContent=Math.round(200-d.disk_used_gb);
+function drag(win,handle){
+  let ox,oy,on=false;
+  handle.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('tb-dot'))return;
+    on=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!on)return;
+    const d=document.getElementById('desktop');
+    win.style.left=Math.max(0,Math.min(e.clientX-ox,d.offsetWidth-win.offsetWidth))+'px';
+    win.style.top=Math.max(0,Math.min(e.clientY-oy,d.offsetHeight-win.offsetHeight))+'px';
+  });
+  document.addEventListener('mouseup',()=>{on=false;});
 }
 
-function setMetric(valId,barId,noteId,val,unit,lbl,cls){
-  document.getElementById(valId).textContent=val;
-  const bar=document.getElementById(barId);
-  bar.style.width=Math.min(val,100)+'%';
-  bar.className='gauge-f '+(cls||'ok');
-  document.getElementById(noteId).textContent=val+unit+' · '+lbl;
-  document.getElementById(noteId).className='snote '+(cls||'ok');
+function addDk(id,a){
+  if(document.getElementById('dk-'+id))return;
+  const da=document.getElementById('dockApps');
+  const dk=document.createElement('div');
+  dk.className='dk';dk.id='dk-'+id;dk.style.background=a.bg;dk.title=a.label;
+  dk.innerHTML=`<svg viewBox="0 0 22 22" fill="none" stroke="${a.stroke}" stroke-width="1.5">${a.icon}</svg><div class="dk-d"></div>`;
+  dk.onclick=()=>{
+    const w=wins[id];
+    if(w?.classList.contains('minimized')){w.classList.remove('minimized');focusWin(id);}
+    else if(w) w.classList.add('minimized');
+  };
+  da.appendChild(dk);
 }
 
-function setBar(barId,valId,pct,unit){
-  const bar=document.getElementById(barId);
-  if(bar) bar.style.width=Math.min(pct,100)+'%';
-  const val=document.getElementById(valId);
-  if(val) val.textContent=pct+unit;
-}
-
-// ── TERMINAL WS ──
+// terminal
 let ws=null;
-function toggleTerm(){
-  if(ws){ ws.close(); return; }
-  const out=document.getElementById('termOut');
-  const input=document.getElementById('termInput');
-  const btn=document.getElementById('termConnBtn');
-  const status=document.getElementById('termStatus');
-
+function termHTML(){
+  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:14px;font-weight:600;color:var(--t0)">bash · galena</span><span id="tSt" style="font-size:10px;padding:2px 8px;border-radius:100px;background:rgba(160,68,68,.15);color:#c07070;border:1px solid rgba(160,68,68,.2)">desconectado</span></div><div class="term-out" id="tOut">[sofiaos] pronto\n</div><div class="term-in"><span class="term-prompt">$</span><input class="term-field" id="tIn" placeholder="conecte para digitar..." onkeydown="tKey(event)" disabled><button class="cbtn" id="tBtn" onclick="tToggle()" style="background:var(--a);color:#1a0f00">Conectar</button></div>`;
+}
+function tToggle(){
+  if(ws){ws.close();return;}
+  const out=document.getElementById('tOut'),inp=document.getElementById('tIn'),btn=document.getElementById('tBtn'),st=document.getElementById('tSt');
+  if(!out)return;
   const proto=location.protocol==='https:'?'wss':'ws';
   ws=new WebSocket(`${proto}://${location.host}/api/terminal`);
   ws.binaryType='arraybuffer';
-
-  ws.onopen=()=>{
-    status.textContent='conectado';status.className='term-status conn';
-    btn.textContent='Desconectar';btn.style.background='var(--err)';
-    input.disabled=false;input.focus();
-    out.textContent='';
-    document.getElementById('termBadge').style.display='';
-  };
-  ws.onmessage=(e)=>{
-    const dec=new TextDecoder();
-    const txt=e.data instanceof ArrayBuffer?dec.decode(e.data):e.data;
-    out.textContent+=txt;
-    out.scrollTop=out.scrollHeight;
-  };
-  ws.onclose=()=>{
-    status.textContent='desconectado';status.className='term-status disc';
-    btn.textContent='Conectar';btn.style.background='var(--a)';
-    input.disabled=true;ws=null;
-    document.getElementById('termBadge').style.display='none';
-  };
-  ws.onerror=()=>{ out.textContent+='\n[erro de conexão]\n'; };
+  ws.onopen=()=>{st.textContent='conectado';st.style.cssText='font-size:10px;padding:2px 8px;border-radius:100px;background:rgba(61,143,95,.15);color:#5bb87a;border:1px solid rgba(61,143,95,.2)';btn.textContent='Desconectar';btn.style.cssText='background:var(--err);color:#fff;padding:5px 11px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit';inp.disabled=false;inp.focus();out.textContent='';};
+  ws.onmessage=e=>{const t=e.data instanceof ArrayBuffer?new TextDecoder().decode(e.data):e.data;out.textContent+=t;out.scrollTop=out.scrollHeight;};
+  ws.onclose=()=>{st.textContent='desconectado';st.style.cssText='font-size:10px;padding:2px 8px;border-radius:100px;background:rgba(160,68,68,.15);color:#c07070;border:1px solid rgba(160,68,68,.2)';btn.textContent='Conectar';btn.style.cssText='background:var(--a);color:#1a0f00;padding:5px 11px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit';inp.disabled=true;ws=null;};
+}
+function tKey(e){
+  if(!ws||ws.readyState!==1)return;
+  if(e.key==='Enter'){ws.send(e.target.value+'\n');e.target.value='';e.preventDefault();}
+  else if(e.key==='Tab'){ws.send('\t');e.preventDefault();}
+  else if(e.ctrlKey&&e.key==='c'){ws.send('\x03');e.preventDefault();}
+  else if(e.ctrlKey&&e.key==='l'){document.getElementById('tOut').textContent='';e.preventDefault();}
 }
 
-function termKey(e){
-  if(!ws||ws.readyState!==1) return;
-  if(e.key==='Enter'){
-    const cmd=e.target.value+'\n';
-    ws.send(cmd);e.target.value='';
-    e.preventDefault();
-  } else if(e.key==='Tab'){
-    ws.send('\t');e.preventDefault();
-  } else if(e.ctrlKey&&e.key==='c'){
-    ws.send('\x03');e.preventDefault();
-  } else if(e.ctrlKey&&e.key==='l'){
-    document.getElementById('termOut').textContent='';e.preventDefault();
-  }
+// metrics native
+function metricsHTML(){
+  return `<div style="font-size:14px;font-weight:600;color:var(--t0);margin-bottom:14px">Oracle VPS · Brazil East</div><div id="mRows"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><div style="background:var(--s2);border-radius:var(--r);padding:12px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">RAM livre</div><div><span id="mRF" style="font-size:22px;font-weight:300;color:var(--t0)">…</span><span style="font-size:12px;color:var(--t2)">MB</span></div><div style="font-size:10px;color:var(--t3);margin-top:3px">de 1024MB total</div></div><div style="background:var(--s2);border-radius:var(--r);padding:12px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Disco livre</div><div><span id="mDF" style="font-size:22px;font-weight:300;color:var(--t0)">…</span><span style="font-size:12px;color:var(--t2)">GB</span></div><div style="font-size:10px;color:var(--t3);margin-top:3px">de ~200GB total</div></div></div>`;
+}
+function renderMetrics(){
+  if(!M)return;
+  const rows=[
+    {l:'CPU',v:M.cpu_percent+'%',p:M.cpu_percent,c:'var(--ok)'},
+    {l:'RAM',v:M.ram_percent+'%',p:M.ram_percent,c:'var(--a)'},
+    {l:'Disco',v:M.disk_percent+'%',p:M.disk_percent,c:'var(--ok)'},
+    {l:'Load',v:M.load1,p:0,c:'var(--ok)'},
+    {l:'Uptime',v:upStr(M.uptime_seconds),p:0,c:'var(--ok)'},
+  ];
+  const el=document.getElementById('mRows');
+  if(el) el.innerHTML=rows.map(r=>`<div class="vrow"><span class="vlbl">${r.l}</span><div class="vbar"><div class="vfill" style="width:${r.p}%;background:${r.c}"></div></div><span class="vval">${r.v}</span><span class="vpill">ok</span></div>`).join('');
+  const rf=document.getElementById('mRF');const df=document.getElementById('mDF');
+  if(rf)rf.textContent=Math.round(1024-M.ram_used_mb);
+  if(df)df.textContent=Math.round(200-M.disk_used_gb);
 }
 
-// ── INIT ──
-refreshMetrics();
-setInterval(refreshMetrics, 15000);
+// metrics fetch
+let M=null;
+function upStr(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600);return d>0?`${d}d ${h}h`:`${h}h`;}
+async function fetchM(){
+  try{const r=await fetch('/api/metrics');M=await r.json();applyM(M);}catch(e){}
+}
+function applyM(d){
+  const $=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const bw=(id,w)=>{const e=document.getElementById(id);if(e)e.style.width=Math.min(w,100)+'%';};
+  $('sbCpu',d.cpu_percent+'%');$('sbRam',d.ram_used_mb+'MB');$('sbUp',upStr(d.uptime_seconds));
+  document.getElementById('sbUptimeWrap').style.display='';
+  $('wCpu',d.cpu_percent);bw('wCpuBar',d.cpu_percent);
+  $('wRam',d.ram_used_mb);bw('wRamBar',d.ram_percent);
+  $('wUp',upStr(d.uptime_seconds));
+  $('wRamNote',d.ram_percent+'% · de 1024MB');
+  renderMetrics();
+}
+
+function tick(){const n=new Date();document.getElementById('clock').textContent=n.getHours()+':'+String(n.getMinutes()).padStart(2,'0');}
+tick();setInterval(tick,10000);
+fetchM();setInterval(fetchM,15000);
 </script>
 </body>
 </html>
