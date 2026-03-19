@@ -1,0 +1,24 @@
+[Unit]
+Description=SofiaOS Web Server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/sofiaos
+ExecStart=/home/ubuntu/sofiaos/sofiaos
+Restart=always
+RestartSec=5
+
+# ── SEGURANÇA ──────────────────────────────────────────────────
+# Variáveis sensíveis via env file — não commitar no git
+EnvironmentFile=/home/ubuntu/sofiaos/.env
+
+# Isola o processo
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/ubuntu/sofiaos
+
+[Install]
+WantedBy=multi-user.target
